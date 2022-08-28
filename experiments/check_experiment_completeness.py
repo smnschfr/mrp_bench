@@ -61,9 +61,10 @@ if __name__ == "__main__":
     if len(files) < 2:
         print(f'{len(files)} YAMLs found in {path_to_folder}. At least 2 are needed.')
         exit(1)
+        
+    print(f'Total number of experiments: {len(files)}')
 
     params = {}
-
     # iterate over the list
     for file in files[:]:
         # update dict where necessary
@@ -71,13 +72,14 @@ if __name__ == "__main__":
         for key, value in zip(list(df), df.values.tolist()[0]):
             # ignore metrics, we only check the configs
             # also maps and paths
-            if not key.startswith('metric') and not key.startswith('config.maps') and not 'pathto' in key.lower(): 
+            if (not key.startswith('metric') 
+            and not key.startswith('config.maps') 
+            and not 'pathto' in key.lower()):
+
                 # add param if necessary
                 if not key in params:
                     params[key] = {}
                 # add value of param (or increase counter)
-                if isinstance(value, list):
-                    print(key, value)
                 if value in params[key]:
                     params[key][value] += 1
                 else:
