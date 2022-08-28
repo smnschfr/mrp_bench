@@ -26,7 +26,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/param', [package_name + '/param/config.yaml']),
+        # ('share/' + package_name + '/param', [package_name + '/param/config.yaml']),
         # ('share/' + package_name + '/param', [package_name + '/param/office_map.yaml']),
         # ('share/' + package_name + '/param', [package_name + '/param/airport_terminal_map.yaml']),
         # ('share/' + package_name + '/param', [package_name + '/param/warehouse_map.yaml']),
