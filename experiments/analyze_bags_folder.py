@@ -18,16 +18,18 @@
 import argparse
 import os
 import sys
+import pathlib
 
 # import local class from the bench_pkg
-launch_dir = os.path.basename(os.path.dirname(__file__))
-bench_pkg_path = os.path.join(launch_dir, '..', 'build/bench_pkg/build/lib/bench_pkg')
+launch_dir = pathlib.Path(__file__).parent.resolve()
+bench_pkg_path = os.path.join(launch_dir, '..', 'bench_ws/bench_pkg/bench_pkg')
 sys.path.append(bench_pkg_path)
 
 try:
     from metric_collector import BagAnalyzer
-except ImportError:
+except ImportError as err:
     print(f'Failed trying to import the BagAnalyzer class from {bench_pkg_path}.')
+    print(err)
     print('Please make sure that the package is built (colcon build).')
     exit()
 
