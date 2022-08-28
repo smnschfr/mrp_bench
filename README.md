@@ -17,7 +17,7 @@ Detach the docker container using Ctrl + P, Ctrl + Q
 
 
 # Installation Instructions Manually From Source
-For manually installing from see, see [these instructions](Installation.md).
+For manually installing from source, see [these instructions](Installation.md).
 
 
 # Running Experiments
