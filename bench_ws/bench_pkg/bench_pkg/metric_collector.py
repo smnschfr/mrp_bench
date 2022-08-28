@@ -29,32 +29,32 @@ import numpy as np
 from itertools import combinations
 import sys
 
-# load configuration
-print(os.getcwd() )
-with open(os.path.join(get_package_share_directory('bench_pkg'), 'param/config.yaml'), 'r') as stream:
-    try:
-        config = DotMap(yaml.safe_load(stream), _dynamic=False)
-    except yaml.YAMLError as exc:
-        print(exc)
-
 class MetricCollector:
     def __init__(self, benchManager) -> None:
+        # load configuration
+        print(os.getcwd() )
+        with open(os.path.join(get_package_share_directory('bench_pkg'), 'param/config.yaml'), 'r') as stream:
+            try:
+                self.config = DotMap(yaml.safe_load(stream), _dynamic=False)
+            except yaml.YAMLError as exc:
+                print(exc)
+
         self.benchManager = benchManager
 
         datestring = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
         numAgents = self.benchManager.getNumAgents()
-        baseFileString = f'{datestring}_{config.common.mapName}_{numAgents}_{config.pathPlanning.algorithmToCall}_{config.common.random.randomSeed}'
+        baseFileString = f'{datestring}_{self.config.common.mapName}_{numAgents}_{self.config.pathPlanning.algorithmToCall}_{self.config.common.random.randomSeed}'
         
         # get suboptimal algos and add extra string to them
         suboptimalAlgos = []
-        for algoName, algoDict in config.algorithms.items():
+        for algoName, algoDict in self.config.algorithms.items():
             if 'suboptimalityFactor' in algoDict:
                 suboptimalAlgos.append(algoName)
-        if config.pathPlanning.algorithmToCall in suboptimalAlgos:
-            baseFileString = f'{datestring}_{config.common.mapName}_{numAgents}_{config.pathPlanning.algorithmToCall}_{config.common.random.randomSeed}_{config.algorithms[config.pathPlanning.algorithmToCall].suboptimalityFactor}'
+        if self.config.pathPlanning.algorithmToCall in suboptimalAlgos:
+            baseFileString = f'{datestring}_{self.config.common.mapName}_{numAgents}_{self.config.pathPlanning.algorithmToCall}_{self.config.common.random.randomSeed}_{self.config.algorithms[self.config.pathPlanning.algorithmToCall].suboptimalityFactor}'
        
         fileName = f'{baseFileString}.yaml'
-        self.filePath = os.path.join(config.common.metrics.basePathToOutFiles, fileName)
+        self.filePath = os.path.join(self.config.common.metrics.basePathToOutFiles, fileName)
 
         self.metrics = {
             # meta
@@ -131,7 +131,7 @@ class MetricCollector:
     # TODO: Put into some static Util class for both
     def updateFileOnDisk(self):
         # save on disk
-        o = {'config': config.toDict()}
+        o = {'self.config': self.config.toDict()}
         o['metrics'] = self.metrics
         f = open(self.filePath, 'w')
         f.write(yaml.dump(o, sort_keys=False, default_style=None))
