@@ -13,13 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from importlib.metadata import metadata
 import sys
 # import seaborn as sb
 import argparse
-import os
 import yaml
 import pandas as pd
 import pprint
+from pathlib import Path
 
 
 # converts yaml to flattened pandas dataframe
@@ -45,7 +46,7 @@ if __name__ == "__main__":
     '''
     parser = argparse.ArgumentParser(description=help)
     parser.add_argument('--folder', '-f', type=str, required=True,
-                        help='Relative or absolute path to the folder containing experiment yamls.')
+                        help='Relative or absolute path to the folder containing experiment yamls. Subdirs are recursively checked as well.')
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
@@ -55,13 +56,16 @@ if __name__ == "__main__":
     path_to_folder = args.folder
     print(f'Checking {path_to_folder}.')
 
-    files = next(os.walk(path_to_folder), (None, None, []))[2]
-    files = [os.path.join(path_to_folder, file) for file in files if file.endswith('yaml')]
+    files = []
+    for path in Path(path_to_folder).rglob('*.yaml'):
+        if not str(path).endswith('metadata.yaml'):
+            files.append(path)
+
 
     if len(files) < 2:
         print(f'{len(files)} YAMLs found in {path_to_folder}. At least 2 are needed.')
         exit(1)
-        
+
     print(f'Total number of experiments: {len(files)}')
 
     params = {}
@@ -80,6 +84,8 @@ if __name__ == "__main__":
                 if not key in params:
                     params[key] = {}
                 # add value of param (or increase counter)
+                if isinstance(value, list): # should not occur and be filtered earlier, but this helps debugging
+                    print(key, value)
                 if value in params[key]:
                     params[key][value] += 1
                 else:
