@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import sys
+from tokenize import group
 import pandas as pd
 import matplotlib.pyplot as plt
 # import seaborn as sb
@@ -21,6 +22,7 @@ import argparse
 
 
 separator = '\n\n*******************\n*******************\n*******************\n\n'
+smallseparator = '\n*******************\n'
 
 # pass folder as arg
 if __name__ == "__main__":
@@ -46,6 +48,12 @@ if __name__ == "__main__":
     print('Algorithms detected: ')
     algos = dfo['config.pathPlanning.algorithmToCall'].unique()
     print(algos)
+
+    # group by stuff
+    baseGroupBy = ['config.pathPlanning.algorithmToCall']
+    print("additionalGroupBy arguments for many plots:")
+    additionalGroupBy = [[], ['config.common.mapName'], ['config.common.random.numAgents']]
+    print(additionalGroupBy)
 
     print(separator)
 
@@ -75,28 +83,70 @@ if __name__ == "__main__":
     print(separator)
 
     # planning success
-    print('Valid schedule found by algorithm within the timeout:\n------')
-    filtered = df[df['metrics.validScheduleFound'] == True]
-    df2 = dict(filtered.groupby(['config.pathPlanning.algorithmToCall'])[
-               'metrics.validScheduleFound'].count())
-    for alg, res in df2.items():
-        print(f'{alg}: {res}/{runsPerAlgo}')
+    for gb in additionalGroupBy:
+        df = dfo.copy()
+        print(f'Valid schedule found by algorithm within the timeout. Groupby: {",".join(gb)}\n------')
+        currentGroupBy = baseGroupBy.copy()
+        currentGroupBy.extend(gb)
+        groupedUnfiltered = df.groupby(currentGroupBy)
+        filtered = df[df['metrics.validScheduleFound'] == True].groupby(currentGroupBy)
+        resFiltered = dict(filtered['metrics.validScheduleFound'].count())
+        resUnfiltered = dict(groupedUnfiltered['metrics.validScheduleFound'].count())
+        for (alg, resF), (alg2, resUF) in zip(resFiltered.items(), resUnfiltered.items()):
+            print(f'{alg}: {resF}/{resUF}')
+
+        print(smallseparator)
 
     print(separator)
 
-    # success global and local
-    numGoals = dfo['config.common.random.numAgents'].unique()
-    print(numGoals)
+    # success global and successful only
+    print(f'Successful runs by algorithm')
+    print(smallseparator)
+    # global
+    for gb in additionalGroupBy:
+        df = dfo.copy()
+        print(f'Successful runs by algorithm - all runs. Groupby: {",".join(gb)}\n------')
+        currentGroupBy = baseGroupBy.copy()
+        currentGroupBy.extend(gb)
+        groupedUnfiltered = df.groupby(currentGroupBy)
+        filtered = df[df['metrics.allGoalReached'] == True].groupby(currentGroupBy)
+        resFiltered = dict(filtered['metrics.allGoalReached'].count())
+        resUnfiltered = dict(groupedUnfiltered['metrics.allGoalReached'].count())
+        for (alg, resF), (alg2, resUF) in zip(resFiltered.items(), resUnfiltered.items()):
+            print(f'{alg}: {resF}/{resUF}')
 
-    for n in numGoals:
-        print(f'Successful runs global by algorithm - {n} goals:\n------')
-        df3 = df[df['metrics.goalsReached'] == n].groupby(['config.pathPlanning.algorithmToCall'])[
-            'config.pathPlanning.algorithmToCall'].count()
-        # df3 = df.groupby(['config.pathPlanning.algorithmToCall', 'config.pathRequests.sendPathWithBreaks'])['metrics.executionTimeoutReached'].count()
-        print(df3)
-        print('\n\n')
+        print(smallseparator)
 
-    print(separator)
+    print(smallseparator)
+    # succ only
+    for gb in additionalGroupBy:
+        print(f'Successful runs by algorithm - only runs where a schedule was found by all algorithms. Groupby: {",".join(gb)}\n------')
+        df = dfo.copy()
+        df['metrics.validScheduleFound'] = df['metrics.validScheduleFound'].astype(int)
+        dff = df[df.groupby(['config.common.mapName', 'config.common.random.randomSeed', 'config.common.random.numAgents'])['metrics.validScheduleFound'].transform(sum) == len(algos)]
+        currentGroupBy = baseGroupBy.copy()
+        currentGroupBy.extend(gb)
+        groupedUnfiltered = dff.groupby(currentGroupBy)
+        filtered = dff[dff['metrics.allGoalReached'] == True].groupby(currentGroupBy)
+        resFiltered = dict(filtered['metrics.allGoalReached'].count())
+        resUnfiltered = dict(groupedUnfiltered['metrics.allGoalReached'].count())
+        for (alg, resF), (alg2, resUF) in zip(resFiltered.items(), resUnfiltered.items()):
+            print(f'{alg}: {resF}/{resUF}')
+
+        print(smallseparator)
+
+
+    # df = dfo.copy()
+    # df['metrics.validScheduleFound'] = df['metrics.validScheduleFound'].astype(int)
+    # dff = df[df.groupby(['config.common.mapName', 'config.common.random.randomSeed', 'config.common.random.numAgents'])['metrics.validScheduleFound'].transform(sum) == 2]
+    # num_scens_total = len(dff)
+    # num_each = len(dff[dff['config.pathPlanning.algorithmToCall'] == 'AStar'])
+    # mapName = 'aaairport_terminal'
+    # cbs = dff[(dff['config.pathPlanning.algorithmToCall'] == 'CBS') & (dff['config.common.mapName'] != mapName)]['metrics.makespan'].describe()
+    # cbs_ta = dff[(dff['config.pathPlanning.algorithmToCall'] == 'CBS-TA')  & (dff['config.common.mapName'] != mapName)]['metrics.makespan'].describe()
+    # ecbs = dff[(dff['config.pathPlanning.algorithmToCall'] == 'ECBS') & (dff['config.common.mapName'] != mapName)]['metrics.makespan'].describe()
+    # ecbs_ta = dff[(dff['config.pathPlanning.algorithmToCall'] == 'ECBS-TA') & (dff['config.common.mapName'] != mapName)]['metrics.makespan'].describe()
+
 
    # PLOTTING
 
